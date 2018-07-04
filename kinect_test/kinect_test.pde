@@ -5,12 +5,6 @@ PImage img;
 PImage img1;
 PImage img2;
 PImage img3;
-PImage img4;
-PImage img5;
-PImage img6;
-PImage img7;
-PImage img8;
-PImage img9;
 
 PImage infra;
 PImage infra1;
@@ -55,12 +49,6 @@ void draw(){
     meterData[i] = rawData[i];
   }
  
-  img9 = img8;
-  img8 = img7;
-  img7 = img6;
-  img6 = img5;
-  img5 = img4;
-  img4 = img3;
   img3 = img2;
   img2 = img1;
   
@@ -82,19 +70,13 @@ void draw(){
   
   img = createImage(512, 424, RGB);
 
-  if (img2 != null && img3 != null && img4 != null && img5 != null && img6 != null && img7 != null && img8 != null && img9 != null) {
+  if (img2 != null && img3 != null) {
     for(int i = 0; i < img.pixels.length; i++) {
       //println(img1.pixels[i] + " | " + img2.pixels[i] + " | " + img3.pixels[i]);
       if (
           (img1.pixels[i] == img2.pixels[i]) && 
           (img2.pixels[i] == img3.pixels[i]) && 
-          (img3.pixels[i] == img4.pixels[i]) && 
-          (img4.pixels[i] == img5.pixels[i]) && 
-          (img5.pixels[i] == img6.pixels[i]) && 
-          (img6.pixels[i] == img7.pixels[i]) && 
-          (img7.pixels[i] == img8.pixels[i]) && 
-          (img8.pixels[i] == img9.pixels[i]) && 
-          (img9.pixels[i] == img1.pixels[i])
+          (img3.pixels[i] == img1.pixels[i])
       ) {
         if ((img1.pixels[i] == color(255, 255, 255)) && (infra.pixels[i] == color(255, 255, 255))) {
           img.pixels[i] = color(255, 255, 255);
