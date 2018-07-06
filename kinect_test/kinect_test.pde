@@ -35,7 +35,7 @@ class InteractiveButton {
   int _height;
   
   int _accumDensity = 0;
-  int _minDensity = 500 * 100;
+  int _minDensity = 350;
   
   public boolean _isPressed = false;
   
@@ -58,30 +58,33 @@ class InteractiveButton {
       for (int j = this._top; (j < img.height) && (j < this._top + this._height); j++) {
         int index = (i + offset) + (j + offset) * img.width;
         if (img.pixels[index] == color(255, 255, 255)) {
-          this._accumDensity += 2000;
+          this._accumDensity += 1;
         }
       }
     }
     
     if (!_isPressed && (this._minDensity < this._accumDensity)) {
       _isPressed = true;
+      this._accumDensity = 0;
       return true;
     }
     return false;
   }
   
-  public void isUnpressed() {
+  public void update() {
+    boolean isFound = false;
     for (int i = this._left; (i < img.width) && (i < this._left + this._width); i++) {
       for (int j = this._top; (j < img.height) && (j < this._top + this._height); j++) {
         int index = (i + offset) + (j + offset) * img.width;
-        if (img.pixels[index] == color(0, 0, 0)) {
-          this._accumDensity = max(this._accumDensity - 100, -1000000);
+        if (img.pixels[index] == color(255, 255, 255)) {
+          isFound = true;
         }
       }
     }
     
-    if (_isPressed && (this._accumDensity <= -1000000)) {
-      _isPressed = false;
+    if (_isPressed && !isFound) {
+      this._isPressed = false;
+      this._accumDensity = 0;
     }
   }
   
@@ -92,6 +95,7 @@ class InteractiveButton {
 
 void setup(){
   //size(1536, 848); //512*424
+  noCursor();
   fullScreen();
   kinect =new KinectPV2(this);
   kinect.enableDepthMaskImg(true);
@@ -122,7 +126,7 @@ void draw(){
   infra = createImage(512, 424, RGB);
   
   for(int i = 0; i < infra1.pixels.length; i++) {
-    if ( brightness(infra1.pixels[i]) < 35) {
+    if ( brightness(infra1.pixels[i]) < 30) {
       infra.pixels[i] = color(255, 255, 255);
     } else {
       infra.pixels[i] = color(0, 0, 0);
@@ -249,16 +253,10 @@ void draw(){
   } else if (playingWhale && playingRain) {
     image(imgAllPlaying, 0, 0, 1280, 1024);
   }
+ 
   
-  //button1.draw();
-  //button2.draw();
-  
-  if (button1._isPressed) {
-     button1.isUnpressed();
-  }
-  if (button2._isPressed) {
-     button2.isUnpressed();
-  }
+  button1.update();
+  button2.update();
   
   if (button1.isPressed()) {
     if (!playingWhale) {
