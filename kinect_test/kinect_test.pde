@@ -1,13 +1,27 @@
 import KinectPV2.*;
 KinectPV2 kinect;
 
+import processing.sound.*;
+SoundFile whaleSound;
+SoundFile rainSound;
+
 PImage img;
 PImage img1;
 PImage img2;
 PImage img3;
 
+PImage imgWhalePlaying;
+PImage imgRainPlaying;
+PImage imgAllPlaying;
+PImage imgNonePlaying;
+
 PImage infra;
 PImage infra1;
+
+int offset = 600;
+
+boolean playingWhale = false;
+boolean playingRain = false;
 
 InteractiveButton button1;
 InteractiveButton button2;
@@ -21,7 +35,10 @@ class InteractiveButton {
   int _height;
   
   int _accumDensity = 0;
-  int _minDensity = 500;
+  int _minDensity = 500 * 100;
+  
+  public boolean _isPressed = false;
+  
   
   public InteractiveButton(int _left, int _top, int _width, int _height) {
     this._left = _left;
@@ -32,20 +49,40 @@ class InteractiveButton {
   
   public void draw() {
     noFill();
-    stroke(color(255, 255, 0, 128));
+    stroke(color(255, 0, 0));
     rect(this._left, this._top, this._width, this._height);
   }
   
   public boolean isPressed() {
     for (int i = this._left; (i < img.width) && (i < this._left + this._width); i++) {
       for (int j = this._top; (j < img.height) && (j < this._top + this._height); j++) {
-        int index = i + j * img.width;
+        int index = (i + offset) + (j + offset) * img.width;
         if (img.pixels[index] == color(255, 255, 255)) {
-          this._accumDensity++;
+          this._accumDensity += 2000;
         }
       }
     }
-    return this._minDensity < this._accumDensity;
+    
+    if (!_isPressed && (this._minDensity < this._accumDensity)) {
+      _isPressed = true;
+      return true;
+    }
+    return false;
+  }
+  
+  public void isUnpressed() {
+    for (int i = this._left; (i < img.width) && (i < this._left + this._width); i++) {
+      for (int j = this._top; (j < img.height) && (j < this._top + this._height); j++) {
+        int index = (i + offset) + (j + offset) * img.width;
+        if (img.pixels[index] == color(0, 0, 0)) {
+          this._accumDensity = max(this._accumDensity - 100, -1000000);
+        }
+      }
+    }
+    
+    if (_isPressed && (this._accumDensity <= -1000000)) {
+      _isPressed = false;
+    }
   }
   
   public void reset() {
@@ -54,7 +91,8 @@ class InteractiveButton {
 }
 
 void setup(){
-  size(1024,424); //512*424
+  //size(1536, 848); //512*424
+  fullScreen();
   kinect =new KinectPV2(this);
   kinect.enableDepthMaskImg(true);
   kinect.enableInfraredImg(true);
@@ -65,9 +103,17 @@ void setup(){
   //img2 = createImage(512, 424, RGB);
   //img3 = createImage(512, 424, RGB);
   
-  button1 = new InteractiveButton(100, 100, 40, 40);
+  button1 = new InteractiveButton(220, 720, 200, 200);
   
-  button2 = new InteractiveButton(200, 200, 40, 40);
+  button2 = new InteractiveButton(860, 720, 200, 200);
+  
+  imgWhalePlaying = loadImage("playing-whale.png");
+  imgRainPlaying = loadImage("playing-rain.png");
+  imgAllPlaying = loadImage("playing-all.png");
+  imgNonePlaying = loadImage("stop-all.png");
+  
+  whaleSound = new SoundFile(this, "sound-whale.wav");
+  rainSound = new SoundFile(this, "sound-rain.wav");
 }
 
 
@@ -76,7 +122,7 @@ void draw(){
   infra = createImage(512, 424, RGB);
   
   for(int i = 0; i < infra1.pixels.length; i++) {
-    if ( brightness(infra1.pixels[i]) > 20) {
+    if ( brightness(infra1.pixels[i]) < 35) {
       infra.pixels[i] = color(255, 255, 255);
     } else {
       infra.pixels[i] = color(0, 0, 0);
@@ -102,11 +148,14 @@ void draw(){
   //img2 = createImage(512, 424, RGB);
   //img3 = createImage(512, 424, RGB);
   
+  int minDepth = 950;
+  int maxDepth = 980;
+  
   // Draw an image.
   for(int i = 0; i < img1.pixels.length; i++) {
-    if (meterData[i] <= 700) {
+    if (meterData[i] <= minDepth) {
       img1.pixels[i] = color(0, 0, 0);
-    } else if (meterData[i] > 740 && meterData[i] < 760) {
+    } else if (meterData[i] > minDepth && meterData[i] < maxDepth) {
       //float a = lerp(200, 255, (meterData[i] - 770) / (800 - 770));
       img1.pixels[i] = color(255, 255, 255);
     } else {
@@ -155,29 +204,79 @@ void draw(){
     //}
   }
   
-  image(img, 0, 0);
+  img.resize(2850, 2800);
+  //image(img, -offset, -offset);
   
-  pushMatrix();
-  translate(512, 0);
-  scale(-1, 1);
+  //pushMatrix();
+  //translate(1024, 424);
+  //scale(-1, 1);
  
-  image(kinect.getDepthImage(),-512,0);
-  popMatrix();
+  //image(infra,-512,0);
+  //popMatrix();
   
+  //fill(color(255, 255, 255));
+  //stroke(color(0, 0, 0, 0));
+  //rect(0, 0, 512, 424);
   
-  if (tempStatus) {
-    button1.draw();
-    if (button1.isPressed()) {
-      button1.reset();
-      button2.reset();
-      tempStatus = !tempStatus;
+  //if (tempStatus) {
+  //  button1.draw();
+  //  if (button1.isPressed()) {
+  //    button1.reset();
+  //    button2.reset();
+  //    tempStatus = !tempStatus;
+  //  }
+  //} else {
+  //  button2.draw();
+  //  if (button2.isPressed()) {
+  //    button1.reset();
+  //    button2.reset();
+  //    tempStatus = !tempStatus; 
+  //  }
+  //}
+  
+  if (!playingWhale && !playingRain) {
+    image(imgNonePlaying, 0, 0, 1280, 1024);
+    
+    
+  } else if (playingWhale && !playingRain) {
+    image(imgWhalePlaying, 0, 0, 1280, 1024);
+    
+    
+  } else if (!playingWhale && playingRain) {
+    image(imgRainPlaying, 0, 0, 1280, 1024);
+    
+    
+  } else if (playingWhale && playingRain) {
+    image(imgAllPlaying, 0, 0, 1280, 1024);
+  }
+  
+  //button1.draw();
+  //button2.draw();
+  
+  if (button1._isPressed) {
+     button1.isUnpressed();
+  }
+  if (button2._isPressed) {
+     button2.isUnpressed();
+  }
+  
+  if (button1.isPressed()) {
+    if (!playingWhale) {
+      playingWhale = true;
+      whaleSound.play();
+    } else {
+      playingWhale = false;
+      whaleSound.stop();
     }
-  } else {
-    button2.draw();
-    if (button2.isPressed()) {
-      button1.reset();
-      button2.reset();
-      tempStatus = !tempStatus; 
+  }
+  
+  if (button2.isPressed()) {
+    if (!playingRain) {
+      playingRain = true;
+      rainSound.play();
+    } else {
+      playingRain = false;
+      rainSound.stop();
     }
   }
 }
