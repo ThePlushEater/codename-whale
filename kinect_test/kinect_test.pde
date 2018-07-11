@@ -35,7 +35,7 @@ class InteractiveButton {
   int _height;
   
   int _accumDensity = 0;
-  int _minDensity = 350;
+  int _minDensity = 300;
   
   public boolean _isPressed = false;
   
