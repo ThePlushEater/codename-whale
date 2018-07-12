@@ -30,14 +30,14 @@ PImage infra1;
 int minDepth = 950;
 int maxDepth = 980;
 
-int shapeMinDepth = 890;
-int shapeMaxDepth = 935;
+int shapeMinDepth = 800;
+int shapeMaxDepth = 870;
 
 int kinectWidth = 512;
 int kinectHeight = 424;
 int kinectScaleX = 3150;
-int kinectOffsetX = kinectScaleX / 4;
-int kinectOffsetY = int(kinectOffsetX * 424f / 512f) - 100;
+int kinectOffsetX = int(kinectScaleX / 3.9f);
+int kinectOffsetY = int(kinectOffsetX * kinectHeight / float(kinectWidth)) - (kinectScaleX / 28);
 
 
 boolean playingWhale = false;
@@ -47,6 +47,41 @@ InteractiveButton button1;
 InteractiveButton button2;
 
 boolean tempStatus = true;
+
+Face face1;
+Face face2;
+
+class Face {
+  float _angle;
+  PVector _position;
+  PImage _image;
+  PVector _scale;
+  
+  public Face(PImage image) {
+    this._image = image;
+    this._angle = 0;
+    this._position = new PVector(0, 0);
+    this._scale = new PVector(0, 0);
+  }
+  
+  public void update(PVector[] rect) {
+    this._scale = new PVector(int(dist(rect[0].x, rect[0].y, rect[1].x, rect[1].y)), int(dist(rect[1].x,rect[1].y, rect[2].x, rect[2].y)));
+    this._angle = acos((rect[3].x - rect[2].x) / dist(rect[3].x,rect[3].y, rect[2].x, rect[2].y));
+    this._position = new PVector(rect[1].x, rect[1].y);
+  }
+  
+  public void draw() {
+    println(this._scale.x + "|" + this._scale.y);
+    pushMatrix();
+    //this._image.resize(int(this._scale.x), int(this._scale.y));
+    translate(this._position.x, this._position.y);
+    rotate(-this._angle);
+    scale(this._scale.x / this._image.width, this._scale.y / this._image.height);
+
+    image(this._image, 0, 0);
+    popMatrix();
+  }
+}
 
 class InteractiveButton {
   int _left;
@@ -131,6 +166,9 @@ void setup(){
   imgAllPlaying = loadImage("playing-all.png");
   imgNonePlaying = loadImage("stop-all.png");
   
+  face2 = new Face(loadImage("ananya.jpg"));
+  face1 = new Face(loadImage("jojo.jpg"));
+  
   whaleSound = new SoundFile(this, "sound-whale.wav");
   rainSound = new SoundFile(this, "sound-rain.wav");
   
@@ -140,6 +178,11 @@ void setup(){
 
 
 void draw(){
+  //clear();
+  background(0);
+  face1.draw();
+  face2.draw();
+  
   infra1 = kinect.getInfraredImage();
   infra = createImage(512, 424, RGB);
   
@@ -196,7 +239,7 @@ void draw(){
   //opencv.gray();
   //opencv.threshold(0);
   contours = opencv.findContours();
-  println("Found " + contours.size() + " contours");
+  //println("Found " + contours.size() + " contours");
   
   // Draw an image.
   for(int i = 0; i < img1.pixels.length; i++) {
@@ -236,29 +279,47 @@ void draw(){
   
   //img.resize(kinectScale, kinectScale);
   shapeImage.resize(kinectScaleX, int(kinectScaleX * 424f / 512f));
-  image(shapeImage, -kinectOffsetX, -kinectOffsetY);
+  
+  
+  
+  //image(shapeImage, -kinectOffsetX, -kinectOffsetY);
   
   //image (shapeImage, 0, 0);
   
   noFill();
-  strokeWeight(1);
+  //strokeWeight(1);
   for (Contour contour : contours) {
-    stroke(0, 0, 255);
-    contour.draw();
+    //stroke(0, 0, 255);
+    //contour.draw();
     
     ArrayList<PVector> points = contour.getPolygonApproximation().getPoints();
     if (points.size() == 4) { // Rectangle
       if ((points.get(0).dist(points.get(1)) > 25) && points.get(1).dist(points.get(2)) > 25) {
-        stroke(255, 0, 0);
-        beginShape();
-        for (PVector point : points) {
-          vertex(point.x, point.y);
+        if ((points.get(0).dist(points.get(1)) < 50) && points.get(1).dist(points.get(2)) < 50) {
+          //fill(color(255, 255, 255));
+          //beginShape();
+          
+          PVector[] rect = new PVector[4];
+          
+          for (int i = 0; i < points.size(); i++) {
+            rect[i] = new PVector(points.get(i).x * (kinectScaleX / (float)kinectWidth) - kinectOffsetX, points.get(i).y * ((kinectScaleX * kinectHeight / float(kinectWidth)) / kinectHeight) - kinectOffsetY);
+          }
+          
+          //for (int i = 0; i < rect.length; i++) {
+          //  vertex(rect[i].x, rect[i].y);
+          //}
+          //vertex(rect[rect.length-1].x, rect[rect.length-1].y);
+          //endShape();
+          
+          if (rect[1].x < width * 0.5) {
+            face1.update(rect);
+          } else {
+            face2.update(rect);
+          }
         }
-        vertex(points.get(0).x, points.get(0).y);
-        endShape();
       }
     }
-    
-    
   }
+  
+  
 }
