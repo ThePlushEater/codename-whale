@@ -230,11 +230,11 @@ void setup(){
   myFont = createFont("Georgia", 32);
   
   
-  movie1 = new Movie(this, "video.mp4");
-  movie1.loop();
-  currentMovie = movie1;
+  //movie1 = new Movie(this, "video.mp4");
+  //movie1.loop();
+  //currentMovie = movie1;
   
-  frameRate(16);
+  //frameRate(16);
 }
 
 void movieEvent(Movie m) {
@@ -297,6 +297,8 @@ void draw(){
         }
       }
     }
+    
+    //image(shapeImage, 0, 0);
     
     opencv.loadImage(shapeImage);
     opencv.gray();
